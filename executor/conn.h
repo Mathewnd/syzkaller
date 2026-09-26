@@ -203,7 +203,7 @@ public:
 
 	bool Ready(int fd) const
 	{
-		return FD_ISSET(fd, &rdset_);
+		return FD_ISSET(fd, (fd_set *)&rdset_);
 	}
 
 	void Wait(int ms)
