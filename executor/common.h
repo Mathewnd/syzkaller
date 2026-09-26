@@ -274,7 +274,7 @@ static void __attribute__((noinline)) remove_dir(const char* dir)
 	while ((ep = readdir(dp))) {
 		if (strcmp(ep->d_name, ".") == 0 || strcmp(ep->d_name, "..") == 0)
 			continue;
-		char filename[FILENAME_MAX];
+		char filename[PATH_MAX];
 		snprintf(filename, sizeof(filename), "%s/%s", dir, ep->d_name);
 		struct stat st;
 		if (lstat(filename, &st))
