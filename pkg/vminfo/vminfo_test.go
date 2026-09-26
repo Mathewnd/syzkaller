@@ -45,6 +45,17 @@ func TestHostMachineInfo(t *testing.T) {
 	}
 }
 
+func TestAstralMachineInfo(t *testing.T) {
+	checker := New(&Config{Target: &prog.Target{OS: targets.Astral}})
+	modules, _, err := checker.MachineInfo(nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(modules) != 1 || modules[0].Name != "" || modules[0].Addr != 0 {
+		t.Fatalf("expected the kernel entry without a relocation offset, got %+v", modules)
+	}
+}
+
 func TestSyscalls(t *testing.T) {
 	t.Parallel()
 	for _, arches := range targets.List {

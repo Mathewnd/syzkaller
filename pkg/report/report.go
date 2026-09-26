@@ -156,6 +156,7 @@ const (
 )
 
 var ctors = map[string]fn{
+	targets.Astral:  ctorAstral,
 	targets.Linux:   ctorLinux,
 	targets.Starnix: ctorFuchsia,
 	targets.GVisor:  ctorGvisor,

@@ -137,6 +137,7 @@ type Timeouts struct {
 }
 
 const (
+	Astral  = "astral"
 	FreeBSD = "freebsd"
 	Darwin  = "darwin"
 	Fuchsia = "fuchsia"
@@ -191,6 +192,15 @@ func GetEx(OS, arch string, clang bool) *Target {
 }
 
 var List = map[string]map[string]*Target{
+	Astral: {
+		AMD64: {
+			PtrSize: 8,
+			PageSize: 4 << 10,
+
+			CCompiler: "x86_64-astral-gcc",
+			CxxCompiler: "x86_64-astral-g++",
+		},
+	},
 	TestOS: {
 		TestArch64: {
 			PtrSize:  8,
@@ -508,6 +518,14 @@ var List = map[string]map[string]*Target{
 }
 
 var oses = map[string]osCommon{
+	Astral: {
+		BuildOS: 		Linux,
+		SyscallNumbers:		true,
+		SyscallPrefix:		"SYSCALL_",
+		ExecutorUsesForkServer:	true,
+		KernelObject: 		"astral",
+		HostFuzzer:             true,
+	},
 	Linux: {
 		SyscallNumbers:         true,
 		SyscallPrefix:          "__NR_",

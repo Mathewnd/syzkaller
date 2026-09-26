@@ -225,7 +225,7 @@ static void use_temporary_dir(void)
 #endif
 #endif
 
-#if GOOS_netbsd || GOOS_freebsd || GOOS_darwin || GOOS_openbsd || GOOS_test
+#if GOOS_netbsd || GOOS_freebsd || GOOS_darwin || GOOS_openbsd || GOOS_test || GOOS_astral
 #if SYZ_EXECUTOR || SYZ_REPEAT && SYZ_USE_TMP_DIR && SYZ_EXECUTOR_USES_FORK_SERVER
 #include <dirent.h>
 #include <errno.h>
@@ -365,7 +365,7 @@ static void thread_start(void* (*fn)(void*), void* arg)
 #endif
 #endif
 
-#if GOOS_freebsd || GOOS_darwin || GOOS_netbsd || GOOS_openbsd || GOOS_test
+#if GOOS_freebsd || GOOS_darwin || GOOS_netbsd || GOOS_openbsd || GOOS_test || GOOS_astral
 #if SYZ_EXECUTOR || SYZ_THREADED
 
 #include <pthread.h>
@@ -492,6 +492,8 @@ static uint16 csum_inet_digest(struct csum_inet* csum)
 #include "common_test.h"
 #elif GOOS_windows
 #include "common_windows.h"
+#elif GOOS_astral
+#include "common_astral.h"
 #else
 #error "unknown OS"
 #endif

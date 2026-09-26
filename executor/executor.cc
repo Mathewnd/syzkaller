@@ -522,6 +522,8 @@ static void mmap_input();
 #include "executor_darwin.h"
 #elif GOOS_windows
 #include "executor_windows.h"
+#elif GOOS_astral
+#include "executor_astral.h"
 #elif GOOS_test
 #include "executor_test.h"
 #else

@@ -59,6 +59,8 @@ type Config struct {
 func New(cfg *Config) *Checker {
 	var impl checker
 	switch cfg.Target.OS {
+	case targets.Astral:
+		impl = new(astral)
 	case targets.Linux:
 		impl = &linux{vmType: cfg.VMType}
 	case targets.NetBSD:

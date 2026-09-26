@@ -978,8 +978,11 @@ static void runner(char** argv, int argc)
 
 	struct rlimit rlim;
 	rlim.rlim_cur = rlim.rlim_max = kFdLimit;
+
+#if !GOOS_astral
 	if (setrlimit(RLIMIT_NOFILE, &rlim))
 		fail("setrlimit(RLIMIT_NOFILE) failed");
+#endif
 
 	// Ignore all signals we are not interested in.
 	// In particular we want to ignore SIGPIPE, but also everything else since
