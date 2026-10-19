@@ -663,13 +663,11 @@ func (inst *instance) Forward(port int) (string, error) {
 	if port == 0 {
 		return "", fmt.Errorf("vm/qemu: forward port is zero")
 	}
-	if !inst.target.HostFuzzer {
-		if inst.forwardPort != 0 {
-			return "", fmt.Errorf("vm/qemu: forward port already set")
-		}
-		inst.forwardPort = port
+	if inst.forwardPort != 0 {
+	    return "", fmt.Errorf("vm/qemu: forward port already set")
 	}
-	return fmt.Sprintf("localhost:%v", port), nil
+	inst.forwardPort = port
+	return fmt.Sprintf("127.0.0.1:%v", port), nil
 }
 
 func (inst *instance) targetDir() string {
