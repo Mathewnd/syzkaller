@@ -495,6 +495,7 @@ static flatbuffers::span<uint8_t> finish_output(OutputData* output, int proc_id,
 						const std::vector<uint8_t>* process_output);
 static void parse_execute(const execute_req& req);
 static void parse_handshake(const handshake_req& req);
+static bool cover_collection_required();
 
 static void mmap_input();
 
@@ -538,12 +539,12 @@ public:
 		if (used_)
 			fail("recursion in CoverAccessScope");
 		used_ = true;
-		if (flag_coverage)
+		if (cover_collection_required())
 			cover_unprotect(cov_);
 	}
 	~CoverAccessScope()
 	{
-		if (flag_coverage)
+		if (cover_collection_required())
 			cover_protect(cov_);
 		used_ = false;
 	}
