@@ -88,6 +88,11 @@ ifeq ("$(TARGETOS)", "test")
 	TARGETGOARCH := $(HOSTARCH)
 endif
 
+ifeq ("$(TARGETOS)", "managarm")
+	TARGETGOOS := $(HOSTOS)
+	TARGETGOARCH := $(HOSTARCH)
+endif
+
 ifeq ("$(TARGETOS)", "fuchsia")
 	TARGETGOOS := $(HOSTOS)
 	TARGETGOARCH := $(HOSTARCH)

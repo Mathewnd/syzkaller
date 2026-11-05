@@ -148,6 +148,7 @@ const (
 	TestOS  = "test"
 	Trusty  = "trusty"
 	Windows = "windows"
+	Managarm = "managarm"
 
 	// These are VM types, but we put them here to prevent string duplication.
 	GVisor  = "gvisor"
@@ -194,6 +195,15 @@ func GetEx(OS, arch string, clang bool) *Target {
 }
 
 var List = map[string]map[string]*Target{
+	Managarm: {
+		AMD64: {
+			PtrSize:  8,
+			PageSize: 4 << 10,
+			CCompiler:   "x86_64-managarm-gcc",
+			CxxCompiler: "x86_64-managarm-g++",
+			Objdump:     "x86_64-managarm-objdump",
+		},
+	},
 	TestOS: {
 		TestArch64: {
 			PtrSize:  8,
@@ -511,6 +521,14 @@ var List = map[string]map[string]*Target{
 }
 
 var oses = map[string]osCommon{
+	Managarm: {
+		BuildOS: Linux,
+		// The calls are the hel wrappers from hel-syscalls.h, which the executor calls directly
+		SyscallNumbers:         false,
+		ExecutorUsesForkServer: true,
+		HostFuzzer:             true,
+		KernelObject:           "thor",
+	},
 	Linux: {
 		SyscallNumbers:         true,
 		SyscallPrefix:          "__NR_",
