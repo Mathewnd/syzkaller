@@ -732,8 +732,13 @@ func (inst *instance) Run(ctx context.Context, command string) (
 		// but we will also wrap executor with ssh invocation.
 		for i, arg := range args {
 			if strings.HasPrefix(arg, "-executor=") {
-				args[i] = "-executor=" + "/usr/bin/ssh " + strings.Join(sshArgs, " ") +
-					" " + inst.User + "@localhost " + arg[len("-executor="):]
+				wrapper, err := inst.writeExecutorWrapper(sshArgs, arg[len("-executor="):])
+				if err != nil {
+					wpipe.Close()
+					wpipeErr.Close()
+					return nil, nil, err
+				}
+				args[i] = "-executor=" + wrapper
 			}
 			if host := inst.files[arg]; host != "" {
 				args[i] = host
@@ -762,6 +767,24 @@ func (inst *instance) Run(ctx context.Context, command string) (
 		Debug: inst.debug,
 		Scale: inst.timeouts.Scale,
 	})
+}
+
+func (inst *instance) writeExecutorWrapper(sshArgs []string, executor string) (string, error) {
+	quote := func(s string) string {
+		return "'" + strings.ReplaceAll(s, "'", `'\''`) + "'"
+	}
+	var script strings.Builder
+	script.WriteString("#!/bin/sh\nexec /usr/bin/ssh")
+	for _, arg := range sshArgs {
+		script.WriteString(" " + quote(arg))
+	}
+	fmt.Fprintf(&script, " -R \"$4:127.0.0.1:$4\" %v %v \"$@\"\n",
+		quote(inst.User+"@localhost"), quote(executor))
+	file := filepath.Join(inst.workdir, "syz-executor-ssh")
+	if err := osutil.WriteExecFile(file, []byte(script.String())); err != nil {
+		return "", fmt.Errorf("failed to write executor wrapper: %w", err)
+	}
+	return file, nil
 }
 
 func (inst *instance) Info() ([]byte, error) {
