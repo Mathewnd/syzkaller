@@ -132,6 +132,14 @@ type archConfig struct {
 }
 
 var archConfigs = map[string]*archConfig{
+	"managarm/amd64": {
+		Qemu:                   "qemu-system-x86_64",
+		QemuArgs:               "-enable-kvm -cpu host,migratable=off -machine smbios-entry-point-type=64",
+		NetDev:                 "virtio-net-pci",
+		RngDev:                 "virtio-rng-pci",
+		UseNewQemuImageOptions: true,
+		BlkDev:                 "virtio-blk-pci",
+	},
 	"astral/amd64": {
 		Qemu:     "qemu-system-x86_64",
 		QemuArgs: "-enable-kvm -cpu host,migratable=off",

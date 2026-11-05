@@ -1,0 +1,158 @@
+include <hel.h>
+
+resource hel_handle[int64]
+resource hel_universe[hel_handle]: kHelNullHandle, kHelThisUniverse
+resource hel_hierarchy[hel_handle]
+resource hel_queue[hel_handle]
+resource hel_memory[hel_handle]
+resource hel_indirect_memory[hel_memory]
+resource hel_swap_space[hel_handle]
+resource hel_space[hel_handle]
+resource hel_vspace[hel_space]
+resource hel_vcpu[hel_handle]
+resource hel_thread[hel_handle]
+resource hel_lane[hel_handle]
+resource hel_event[hel_handle]
+
+syz_execute_func(text ptr[in, text[target]]) (disabled)
+
+syz_mmap(addr vma, len len[addr])
+
+syz_hel_get_process_hierarchy() hel_hierarchy
+
+helNop()
+helYield()
+
+helCreateUniverse(handle ptr[out, hel_universe])
+helTransferDescriptor(handle hel_handle, universe hel_universe, flags flags[hel_transfer_flags], exposed flags[hel_rights], required flags[hel_rights], out ptr[out, hel_handle])
+helDescriptorInfo(handle hel_handle, info ptr[out, HelDescriptorInfo])
+helGetCredentials(handle hel_handle, flags const[0], credentials ptr[out, array[int8, 16]])
+helCloseDescriptor(universe hel_universe, handle hel_handle)
+helObtainHandle(kind flags[hel_obtain_kind], handle ptr[out, hel_memory])
+helCreateToken(handle ptr[out, hel_handle])
+helExtendHierarchy(hierarchy hel_hierarchy, params ptr[in, HelHierarchyParameters], handle ptr[out, hel_hierarchy])
+
+helCreateQueue(params ptr[in, HelQueueParameters], handle ptr[out, hel_queue])
+helDriveQueue(queue hel_queue, flags flags[hel_drive_flags], mask flags[hel_user_notify])
+helAlertQueue(queue hel_queue)
+helSubmitAsyncNop(queue hel_queue, context intptr)
+
+helAllocateMemory(hierarchy hel_hierarchy, size hel_size, flags flags[hel_alloc_flags], restrictions ptr[in, HelAllocRestrictions, opt], handle ptr[out, hel_memory])
+helCreateManagedMemory(hierarchy hel_hierarchy, size hel_size, flags flags[hel_managed_flags], backing ptr[out, hel_memory], frontal ptr[out, hel_memory])
+helCreateSwapSpace(hierarchy hel_hierarchy, flags const[0], backing ptr[out, hel_memory], swap ptr[out, hel_swap_space])
+helAllocateSwappableMemory(hierarchy hel_hierarchy, swap hel_swap_space, size hel_size, flags const[0], handle ptr[out, hel_memory])
+helCopyOnWrite(hierarchy hel_hierarchy, swap hel_swap_space, memory hel_memory, offset hel_offset, size hel_size, handle ptr[out, hel_memory])
+helCreateIndirectMemory(slots int64[0:16], handle ptr[out, hel_indirect_memory])
+helAlterMemoryIndirection(indirect hel_indirect_memory, slot int64[0:16], memory hel_memory, offset hel_offset, size hel_size)
+helCreateSliceView(memory hel_memory, offset hel_offset, size hel_size, flags flags[hel_slice_flags], handle ptr[out, hel_memory])
+helMemoryInfo(memory hel_memory, size ptr[out, int64])
+helUpdateMemory(memory hel_memory, type flags[hel_update_type], offset hel_offset, length hel_size)
+helLoadahead(memory hel_memory, offset hel_offset, length hel_size)
+
+helCreateSpace(handle ptr[out, hel_space])
+helCreateDmaSpace(iommu const[kHelNullHandle], regions ptr[in, array[HelDmaReservedRegion]], num len[regions], flags const[0], handle ptr[out, hel_space])
+helMapMemory(memory hel_memory, space hel_space, pointer vma, offset hel_offset, size len[pointer], flags flags[hel_map_flags], actual ptr[out, intptr])
+helMapMemory$any(memory hel_memory, space hel_space, pointer const[0], offset hel_offset, size hel_size, flags flags[hel_map_flags_nofixed], actual ptr[out, intptr])
+helUnmapMemory(space hel_space, pointer vma, size len[pointer])
+helPointerPhysical(space hel_space, pointer vma, physical ptr[out, int64])
+
+helCreateVirtualizedSpace(handle ptr[out, hel_vspace])
+helCreateVirtualizedCpu(space hel_vspace, handle ptr[out, hel_vcpu])
+helRunVirtualizedCpu(vcpu hel_vcpu, exit ptr[out, HelVmexitReason])
+helAssertVirtualizedIrq(vcpu hel_vcpu, irq int64[0:256], level int8[0:1])
+
+helCreateThread(hierarchy hel_hierarchy, universe hel_universe, space hel_space, ip const[0], sp const[0], flags flags[hel_thread_flags], handle ptr[out, hel_thread])
+helQueryThreadStats(thread hel_thread, stats ptr[out, HelThreadStats])
+helQueryThreadStats$self(thread const[kHelThisThread], stats ptr[out, HelThreadStats])
+helSetPriority(thread hel_thread, priority int32[-10:10])
+helSetPriority$self(thread const[kHelThisThread], priority int32[-10:10])
+helKillThread(thread hel_thread)
+helInterruptThread(thread hel_thread)
+helResume(thread hel_thread)
+helLoadRegisters(thread hel_thread, set flags[hel_register_sets], image ptr[out, array[int64, 0:512]])
+helLoadRegisters$self(thread const[kHelThisThread], set flags[hel_register_sets], image ptr[out, array[int64, 0:512]])
+helStoreRegisters(thread hel_thread, set flags[hel_register_sets], image ptr[in, array[int64, 0:512]])
+helQueryRegisterInfo(set flags[hel_register_sets], info ptr[out, HelRegisterInfo])
+helGetAffinity(thread hel_thread, mask ptr[out, array[int8]], size len[mask], actual ptr[out, int64])
+helGetAffinity$self(thread const[kHelThisThread], mask ptr[out, array[int8]], size len[mask], actual ptr[out, int64])
+helSetAffinity(thread hel_thread, mask ptr[in, array[int8]], size len[mask])
+helSetAffinity$self(thread const[kHelThisThread], mask ptr[in, array[int8, 1:8]], size len[mask])
+helReadFsBase(pointer ptr[out, intptr])
+helReadGsBase(pointer ptr[out, intptr])
+helWriteGsBase(pointer intptr)
+helGetCurrentCpu(cpu ptr[out, int32])
+helGetClock(counter ptr[out, int64])
+helGetRandomBytes(buffer ptr[out, array[int8]], size len[buffer], actual ptr[out, int64])
+
+helCreateStream(lane1 ptr[out, hel_lane], lane2 ptr[out, hel_lane], credentials bool32)
+helShutdownLane(lane hel_lane)
+
+helFutexWait(pointer ptr[inout, int32], expected int32[0:4], deadline hel_deadline)
+helFutexWake(pointer ptr[inout, int32], count int32[0:4])
+
+helCreateOneshotEvent(handle ptr[out, hel_event])
+helCreateBitsetEvent(handle ptr[out, hel_event])
+helCreateSequencedEvent(wait ptr[out, hel_event], raise ptr[out, hel_event])
+helRaiseEvent(event hel_event)
+
+type hel_size int64[0:0x100000, 4096]
+type hel_offset int64[0:0x100000, 4096]
+type hel_deadline int64[-1:1000000]
+
+HelDescriptorInfo {
+	type	int32
+}
+
+HelThreadStats {
+	userTime	int64
+}
+
+HelRegisterInfo {
+	setSize	int32
+}
+
+HelAllocRestrictions {
+	addressBits	int32[0:64]
+}
+
+HelQueueParameters {
+	flags		const[0, int32]
+	numChunks	int32[0:16]
+	chunkSize	int64[0:0x10000]
+	numSqChunks	int32[0:16]
+}
+
+HelHierarchyParameters {
+	tag		array[int8, 128]
+	controllers	flags[hel_hierarchy_controllers, int32]
+	memoryFloor	int64[0:0x10000000, 4096]
+}
+
+HelDmaReservedRegion {
+	base	int64
+	size	int64[0:0x100000, 4096]
+	flags	flags[hel_dma_region_flags, int32]
+}
+
+HelVmexitReason {
+	exitReason	int32
+	code		int32
+	address		int64
+	flags		int64
+}
+
+hel_rights = kHelRightGrant, kHelRightTake, kHelRightRead, kHelRightWrite, kHelRightExecute, kHelRightInvoke, kHelRightAssign, kHelRightDerive, kHelRightProvision, kHelRightPin, kHelRightFence, kHelRightWait, kHelRightSignal, kHelRightManage, kHelRightsMax
+hel_transfer_flags = kHelTransferDescriptorOut, kHelTransferDescriptorIn
+hel_obtain_kind = kHelObtainZeroMemory, kHelObtainClockPage
+hel_drive_flags = kHelDriveWait
+hel_user_notify = kHelUserNotifyCqProgress, kHelUserNotifySupplySqChunks, kHelUserNotifyError, kHelUserNotifyAlert
+hel_alloc_flags = kHelAllocContinuous, kHelAllocOnDemand
+hel_managed_flags = kHelManagedReadahead
+hel_slice_flags = kHelSliceCacheWriteCombine
+hel_update_type = kHelManageInitialize, kHelManageWriteback, kHelUpdateMarkDirty
+hel_map_flags = kHelMapProtRead, kHelMapProtWrite, kHelMapProtExecute, kHelMapDontRequireBacking, kHelMapFixed, kHelMapFixedNoReplace, kHelMapPreferBottom, kHelMapNoDirtyTracking
+hel_map_flags_nofixed = kHelMapProtRead, kHelMapProtWrite, kHelMapProtExecute, kHelMapDontRequireBacking, kHelMapPreferBottom, kHelMapNoDirtyTracking
+hel_thread_flags = kHelThreadStopped
+hel_register_sets = kHelRegsProgram, kHelRegsGeneral, kHelRegsThread, kHelRegsDebug, kHelRegsVirtualization, kHelRegsSimd, kHelRegsSignal, kHelRegsPageFault
+hel_hierarchy_controllers = kHelHierarchyMemoryController
+hel_dma_region_flags = kHelDmaRegionRead, kHelDmaRegionWrite

@@ -67,6 +67,7 @@ var extractors = map[string]Extractor{
 	targets.Fuchsia: new(fuchsia),
 	targets.Windows: new(windows),
 	targets.Trusty:  new(trusty),
+	targets.Managarm: new(managarm),
 }
 
 func main() {

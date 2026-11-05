@@ -988,8 +988,15 @@ static void runner(char** argv, int argc)
 	// In particular we want to ignore SIGPIPE, but also everything else since
 	// test processes manage to send random signals using tracepoints with bpf programs.
 	// This is not a bullet-proof protection, but it won't harm either.
-	for (int sig = 0; sig <= 64; sig++)
+	for (int sig = 0; sig <= 64; sig++) {
+#if GOOS_managarm
+		// SIGKILL/SIGSTOP can't be ignored, but managarm accepts it anyway,
+		// which is inherited by the executor and then KillAndWait() hangs forever.
+		if (sig == SIGKILL || sig == SIGSTOP)
+			continue;
+#endif
 		signal(sig, SIG_IGN);
+	}
 	if (signal(SIGINT, SigintHandler) == SIG_ERR)
 		fail("signal(SIGINT) failed");
 	if (signal(SIGTERM, SigintHandler) == SIG_ERR)

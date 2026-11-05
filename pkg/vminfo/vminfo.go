@@ -61,6 +61,8 @@ func New(cfg *Config) *Checker {
 	switch cfg.Target.OS {
 	case targets.Astral:
 		impl = new(astral)
+	case targets.Managarm:
+		impl = new(managarm)
 	case targets.Linux:
 		impl = &linux{vmType: cfg.VMType}
 	case targets.NetBSD:
