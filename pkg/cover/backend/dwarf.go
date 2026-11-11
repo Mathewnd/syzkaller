@@ -611,6 +611,11 @@ func nextCallTarget(arch *Arch, textAddr uint64, data []byte, pos *int) (uint64,
 		}
 		pc := textAddr + uint64(i)
 		callTarget := arch.callTarget(arch, insn, pc)
+		if callTarget == 0 {
+			// Calls to undefined weak functions (which the linker resolves to 0) cannot be
+			// coverage callbacks, and callers treat target 0 as the end of data.
+			continue
+		}
 		*pos = i + arch.scanSize
 		return callTarget, pc
 	}
