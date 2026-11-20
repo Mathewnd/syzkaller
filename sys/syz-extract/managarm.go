@@ -30,6 +30,8 @@ func (*managarm) processFile(arch *Arch, info *compiler.ConstInfo) (map[string]u
 	args := []string{
 		"-fmessage-length=0",
 		"--sysroot=" + arch.sourceDir,
+		// Some linux extensions need this.
+		"-D_GNU_SOURCE",
 	}
 	for _, incdir := range info.Incdirs {
 		args = append(args, "-I"+filepath.Join(arch.sourceDir, incdir))

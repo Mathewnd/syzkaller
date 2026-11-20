@@ -1,0 +1,97 @@
+include <fcntl.h>
+include <unistd.h>
+include <stdio.h>
+include <sys/file.h>
+include <sys/mman.h>
+include <sys/stat.h>
+include <sys/sysmacros.h>
+include <sys/xattr.h>
+include <linux/fs.h>
+
+openat(fd fd_dir, file ptr[in, filename], flags flags[open_flags], mode flags[open_mode]) fd
+openat$dir(fd const[AT_FDCWD], file ptr[in, filename], flags flags[open_dir_flags], mode const[0]) fd_dir
+openat$dev(fd const[AT_FDCWD], file ptr[in, string[dev_files]], flags flags[open_flags], mode const[0]) fd
+openat$procfs(fd const[AT_FDCWD], file ptr[in, string[procfs_files]], flags flags[open_flags], mode const[0]) fd
+mkdirat(fd fd_dir, path ptr[in, filename], mode flags[open_mode])
+mknodat(fd fd_dir, path ptr[in, filename], mode flags[mknod_mode], dev flags[mknod_dev])
+mkfifoat(fd fd_dir, path ptr[in, filename], mode flags[open_mode])
+unlinkat(fd fd_dir, path ptr[in, filename], flags flags[unlinkat_flags])
+renameat(oldfd fd_dir, old ptr[in, filename], newfd fd_dir, new ptr[in, filename])
+renameat2(oldfd fd_dir, old ptr[in, filename], newfd fd_dir, new ptr[in, filename], flags flags[renameat2_flags])
+linkat(oldfd fd_dir, old ptr[in, filename], newfd fd_dir, new ptr[in, filename], flags flags[linkat_flags])
+symlinkat(old ptr[in, filename], newfd fd_dir, new ptr[in, filename])
+readlinkat(fd fd_dir, path ptr[in, filename], buf buffer[out], size len[buf])
+fstat(fd fd, buf ptr[out, stat])
+fstatat(fd fd_dir, path ptr[in, filename], buf ptr[out, stat], flags flags[fstatat_flags])
+statx(fd fd_dir, path ptr[in, filename], flags flags[statx_flags], mask flags[statx_mask], buf ptr[out, statx])
+faccessat(fd fd_dir, path ptr[in, filename], mode flags[access_mode], flags flags[faccessat_flags])
+fchmod(fd fd, mode flags[open_mode])
+fchmodat(fd fd_dir, path ptr[in, filename], mode flags[open_mode], flags flags[fchmodat_flags])
+fchownat(fd fd_dir, path ptr[in, filename], uid uid, gid gid, flags flags[fchownat_flags])
+utimensat(fd fd_dir, path ptr[in, filename, opt], times ptr[in, array[timespec, 2], opt], flags flags[utimensat_flags])
+ftruncate(fd fd, len fileoff[intptr])
+# TODO: mlibc fallocate() is currently stubbed
+posix_fallocate(fd fd, off fileoff[intptr], len fileoff[intptr])
+fsync(fd fd)
+fdatasync(fd fd)
+sync()
+syncfs(fd fd)
+flock(fd fd, op flags[flock_op])
+# mlibc asserts that the buffer is larger than a struct dirent
+getdents64(fd fd_dir, buf ptr[out, array[int8, 300:4096]], size len[buf])
+getcwd(buf buffer[out], size len[buf])
+chdir(path ptr[in, filename])
+fchdir(fd fd_dir)
+statfs(path ptr[in, filename], buf ptr[out, statfs])
+fstatfs(fd fd, buf ptr[out, statfs])
+
+setxattr(path ptr[in, filename], name ptr[in, string[xattr_names]], val buffer[in], size len[val], flags flags[setxattr_flags])
+lsetxattr(path ptr[in, filename], name ptr[in, string[xattr_names]], val buffer[in], size len[val], flags flags[setxattr_flags])
+fsetxattr(fd fd, name ptr[in, string[xattr_names]], val buffer[in], size len[val], flags flags[setxattr_flags])
+getxattr(path ptr[in, filename], name ptr[in, string[xattr_names]], val buffer[out], size len[val])
+lgetxattr(path ptr[in, filename], name ptr[in, string[xattr_names]], val buffer[out], size len[val])
+fgetxattr(fd fd, name ptr[in, string[xattr_names]], val buffer[out], size len[val])
+listxattr(path ptr[in, filename], list buffer[out], size len[list])
+llistxattr(path ptr[in, filename], list buffer[out], size len[list])
+flistxattr(fd fd, list buffer[out], size len[list])
+removexattr(path ptr[in, filename], name ptr[in, string[xattr_names]])
+lremovexattr(path ptr[in, filename], name ptr[in, string[xattr_names]])
+fremovexattr(fd fd, name ptr[in, string[xattr_names]])
+
+memfd_create(name ptr[in, string], flags flags[memfd_flags]) fd
+
+mmap(addr vma, len len[addr], prot flags[mmap_prot], flags flags[mmap_flags], fd fd, offset fileoff[intptr])
+munmap(addr vma, len len[addr])
+mprotect(addr vma, len len[addr], prot flags[mmap_prot])
+mremap(addr vma, len len[addr], newlen len[newaddr], flags flags[mremap_flags], newaddr vma)
+madvise(addr vma, len len[addr], advice flags[madvise_flags])
+
+type stat array[int8, 144]
+type statx array[int8, 256]
+type statfs array[int8, 120]
+
+open_dir_flags = O_RDONLY, O_DIRECTORY, O_PATH, O_CLOEXEC, O_NOFOLLOW
+open_flags = O_RDONLY, O_WRONLY, O_RDWR, O_APPEND, O_ASYNC, O_CLOEXEC, O_CREAT, O_DIRECT, O_DIRECTORY, O_DSYNC, O_EXCL, O_NOATIME, O_NOCTTY, O_NOFOLLOW, O_NONBLOCK, O_PATH, O_SYNC, O_TRUNC, O_TMPFILE
+mknod_mode = S_IFREG, S_IFCHR, S_IFIFO, S_IFSOCK, S_IRUSR, S_IWUSR, S_IXUSR, S_IRGRP, S_IWGRP, S_IXGRP, S_IROTH, S_IWOTH, S_IXOTH
+mknod_dev = 0, 0x103, 0x105, 0x107, 0x108, 0x109, 0x500, 0x502
+dev_files = "/dev/null", "/dev/zero", "/dev/full", "/dev/random", "/dev/urandom", "/dev/tty"
+procfs_files = "/proc/self/maps", "/proc/self/comm", "/proc/self/stat", "/proc/self/statm", "/proc/self/status", "/proc/self/cgroup", "/proc/self/mounts", "/proc/self/mountinfo", "/proc/self/fd", "/proc/self/fdinfo", "/proc/self/task", "/proc/self/root", "/proc/self/cwd", "/proc/uptime", "/proc/mounts", "/proc/sys/kernel/random/boot_id", "/proc/sys/kernel/ostype", "/proc/sys/kernel/osrelease", "/proc/sys/kernel/arch", "/proc/sys/kernel/hostname"
+unlinkat_flags = AT_REMOVEDIR
+renameat2_flags = RENAME_EXCHANGE, RENAME_NOREPLACE, RENAME_WHITEOUT
+linkat_flags = AT_EMPTY_PATH, AT_SYMLINK_FOLLOW
+fstatat_flags = AT_EMPTY_PATH, AT_NO_AUTOMOUNT, AT_SYMLINK_NOFOLLOW
+statx_flags = AT_EMPTY_PATH, AT_NO_AUTOMOUNT, AT_SYMLINK_NOFOLLOW, AT_STATX_SYNC_AS_STAT, AT_STATX_FORCE_SYNC, AT_STATX_DONT_SYNC
+statx_mask = STATX_TYPE, STATX_MODE, STATX_NLINK, STATX_UID, STATX_GID, STATX_ATIME, STATX_MTIME, STATX_CTIME, STATX_INO, STATX_SIZE, STATX_BLOCKS, STATX_BASIC_STATS, STATX_BTIME
+access_mode = R_OK, W_OK, X_OK, F_OK
+faccessat_flags = AT_EACCESS, AT_EMPTY_PATH, AT_SYMLINK_NOFOLLOW
+fchmodat_flags = AT_SYMLINK_NOFOLLOW
+fchownat_flags = AT_EMPTY_PATH, AT_SYMLINK_NOFOLLOW
+utimensat_flags = AT_SYMLINK_NOFOLLOW
+flock_op = LOCK_SH, LOCK_EX, LOCK_UN, LOCK_NB
+xattr_names = "user.syz", "user.syz2", "trusted.syz", "security.syz", "system.posix_acl_access", "user."
+setxattr_flags = XATTR_CREATE, XATTR_REPLACE
+memfd_flags = MFD_CLOEXEC, MFD_ALLOW_SEALING, MFD_HUGETLB
+mmap_prot = PROT_NONE, PROT_READ, PROT_WRITE, PROT_EXEC
+mmap_flags = MAP_SHARED, MAP_PRIVATE, MAP_ANONYMOUS, MAP_FIXED, MAP_FIXED_NOREPLACE, MAP_NORESERVE, MAP_POPULATE, MAP_NONBLOCK, MAP_STACK, MAP_GROWSDOWN
+madvise_flags = MADV_NORMAL, MADV_RANDOM, MADV_SEQUENTIAL, MADV_WILLNEED, MADV_DONTNEED, MADV_FREE, MADV_REMOVE, MADV_DONTFORK, MADV_DOFORK
+mremap_flags = MREMAP_MAYMOVE, MREMAP_FIXED

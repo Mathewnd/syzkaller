@@ -59,12 +59,18 @@ static intptr_t execute_syscall(const call_t* c, intptr_t a[kMaxArgs])
 	if (strncmp(c->name, "syz_", 4) == 0)
 		return res;
 
-	HelError error = (HelError)res;
-	if (error != kHelErrNone) {
-		errno = error;
-		return -1;
+	// hel function
+	if (strncmp(c->name, "hel", 3) == 0) {
+		HelError error = (HelError)res;
+		if (error != kHelErrNone) {
+			errno = error;
+			return -1;
+		}
+		return 0;
 	}
-	return 0;
+
+	// libc function
+	return (int)res;
 }
 
 #define KCOV_REQUEST_SET_SIZE _IOW('c', 1, int)

@@ -1,0 +1,225 @@
+include <fcntl.h>
+include <unistd.h>
+include <signal.h>
+include <time.h>
+include <poll.h>
+include <sched.h>
+include <sys/ioctl.h>
+include <sys/prctl.h>
+include <sys/resource.h>
+include <sys/select.h>
+include <sys/stat.h>
+include <sys/time.h>
+include <sys/wait.h>
+
+resource fd[int32]: -1
+resource fd_dir[fd]: AT_FDCWD
+resource pid[int32]: 0
+resource uid[int32]: 0, -1, 0xee00, 0xee01
+resource gid[int32]: 0, -1, 0xee00, 0xee01
+resource timer[intptr]
+resource sighandler[intptr]: SIG_DFL, SIG_IGN
+
+close(fd fd)
+read(fd fd, buf buffer[out], count len[buf])
+write(fd fd, buf buffer[in], count len[buf])
+pread(fd fd, buf buffer[out], count len[buf], off fileoff[intptr])
+pwrite(fd fd, buf buffer[in], count len[buf], off fileoff[intptr])
+readv(fd fd, vec ptr[in, array[iovec_out]], vlen len[vec])
+writev(fd fd, vec ptr[in, array[iovec_in]], vlen len[vec])
+preadv(fd fd, vec ptr[in, array[iovec_out]], vlen len[vec], off fileoff[intptr])
+pwritev(fd fd, vec ptr[in, array[iovec_in]], vlen len[vec], off fileoff[intptr])
+lseek(fd fd, offset fileoff[intptr], whence flags[seek_whence])
+dup(oldfd fd) fd
+dup2(oldfd fd, newfd fd) fd
+dup3(oldfd fd, newfd fd, flags flags[dup_flags]) fd
+
+fcntl$dupfd(fd fd, cmd flags[fcntl_dupfd], arg fd) fd
+fcntl$getflags(fd fd, cmd flags[fcntl_getflags])
+fcntl$setflags(fd fd, cmd const[F_SETFD], flags flags[fcntl_fd_flags])
+fcntl$setstatus(fd fd, cmd const[F_SETFL], flags flags[fcntl_status])
+fcntl$lock(fd fd, cmd flags[fcntl_lock], lock ptr[inout, flock])
+fcntl$addseals(fd fd, cmd const[F_ADD_SEALS], seals flags[seal_types])
+
+ioctl$FIONREAD(fd fd, cmd const[FIONREAD], arg ptr[out, int32])
+ioctl$FIONBIO(fd fd, cmd const[FIONBIO], arg ptr[in, int32])
+ioctl$FIOCLEX(fd fd, cmd const[FIOCLEX])
+
+# short waits as to not need to spend a lot of time waiting
+poll(fds ptr[inout, array[pollfd]], nfds len[fds], timeout int32[0:20])
+ppoll(fds ptr[inout, array[pollfd]], nfds len[fds], tsp ptr[in, timeout_ts], sigmask ptr[in, sigset, opt])
+pselect(n int32[0:1025], inp ptr[inout, fd_set, opt], outp ptr[inout, fd_set, opt], exp ptr[inout, fd_set, opt], tsp ptr[in, timeout_ts], sigmask ptr[in, sigset, opt])
+
+getpid() pid
+gettid() pid
+getpgid(pid pid) pid
+getsid(pid pid) pid
+setpgid(pid pid, pgid pid)
+setsid() pid
+syz_fork() pid
+waitpid(pid pid, status ptr[out, int32, opt], options flags[wait_options]) pid
+wait4(pid pid, status ptr[out, int32, opt], options flags[wait_options], ru ptr[out, rusage, opt]) pid
+waitid(which flags[waitid_which], id pid, info ptr[out, siginfo, opt], options flags[waitid_options])
+
+getuid() uid
+geteuid() uid
+getgid() gid
+getegid() gid
+setuid(uid uid)
+setgid(gid gid)
+setreuid(ruid uid, euid uid)
+setregid(rgid gid, egid gid)
+setresuid(ruid uid, euid uid, suid uid)
+setresgid(rgid gid, egid gid, sgid gid)
+getresuid(ruid ptr[out, uid], euid ptr[out, uid], suid ptr[out, uid])
+getresgid(rgid ptr[out, gid], egid ptr[out, gid], sgid ptr[out, gid])
+getgroups(size len[list], list ptr[out, array[gid]])
+setgroups(size len[list], list ptr[in, array[gid]])
+
+getrlimit(res flags[rlimit_type], rlim ptr[out, rlimit])
+setrlimit(res flags[rlimit_type], rlim ptr[in, rlimit])
+getrusage(who flags[rusage_who], usage ptr[out, rusage])
+getpriority(which flags[prio_which], who pid)
+setpriority(which flags[prio_which], who pid, prio int32[-20:20])
+sched_getaffinity(pid pid, size len[mask], mask ptr[out, array[int8]])
+sched_setaffinity(pid pid, size len[mask], mask ptr[in, array[int8]])
+prctl$PR_SET_NAME(option const[PR_SET_NAME], name ptr[in, string])
+prctl$PR_GET_NAME(option const[PR_GET_NAME], name ptr[out, array[int8, 16]])
+prctl$PR_SET_PDEATHSIG(option const[PR_SET_PDEATHSIG], sig signalno)
+prctl$PR_CAPBSET_READ(option const[PR_CAPBSET_READ], cap int32[0:41])
+umask(mask flags[open_mode])
+
+kill(pid pid, sig signalno)
+tgkill(gid pid, tid pid, sig signalno)
+sigqueue(pid pid, sig signalno, value intptr)
+sigaction(sig flags[sigaction_signals], act ptr[in, sigaction, opt], oact ptr[out, sigaction, opt])
+sigprocmask(how flags[sigprocmask_how], set ptr[in, sigset, opt], oset ptr[out, sigset, opt])
+sigpending(set ptr[out, sigset])
+sigtimedwait(set ptr[in, sigset], info ptr[out, siginfo, opt], timeout ptr[in, timeout_ts])
+sigaltstack(ss ptr[in, stack_t, opt], oss ptr[out, stack_t, opt])
+syz_sighandler() sighandler
+
+setitimer(which flags[itimer_which], new ptr[in, itimerval], old ptr[out, itimerval, opt])
+timer_create(id flags[clock_id], ev ptr[in, sigevent, opt], timerid ptr[out, timer])
+timer_settime(timerid timer, flags flags[timer_flags], new ptr[in, itimerspec], old ptr[out, itimerspec, opt])
+timer_gettime(timerid timer, setting ptr[out, itimerspec])
+timer_delete(timerid timer)
+clock_gettime(id flags[clock_id], tp ptr[out, timespec])
+clock_getres(id flags[clock_id], tp ptr[out, timespec])
+
+type signalno int32[0:65]
+
+iovec_in {
+	addr	buffer[in]
+	len	len[addr, intptr]
+}
+
+iovec_out {
+	addr	buffer[out]
+	len	len[addr, intptr]
+}
+
+flock {
+	type	flags[flock_type, int16]
+	whence	flags[seek_whence, int16]
+	start	fileoff[intptr]
+	len	fileoff[intptr]
+	pid	int32
+}
+
+pollfd {
+	fd	fd
+	events	flags[pollfd_events, int16]
+	revents	const[0, int16]
+}
+
+fd_set {
+	mask	array[int64, 16]
+}
+
+# posix only uses the first 64 signals of mlibc's 1024-signal sigset_t
+sigset {
+	mask	int64
+	rest	array[const[0, int64], 15]
+}
+
+sigaction {
+	handler		sighandler
+	flags		flags[sigaction_flags, int32]
+	restorer	const[0, intptr]
+	mask		sigset
+}
+
+stack_t {
+	sp	vma
+	flags	flags[sigaltstack_flags, int32]
+	size	len[sp, intptr]
+}
+
+sigevent {
+	value	intptr
+	notify	flags[sigev_notify, int32]
+	signo	signalno
+	func	const[0, intptr]
+	attr	const[0, intptr]
+	tid	pid
+}
+
+timespec {
+	sec	intptr[0:2]
+	nsec	intptr[0:1000000000]
+}
+
+timeout_ts {
+	sec	const[0, intptr]
+	nsec	intptr[0:20000000]
+}
+
+timeval {
+	sec	intptr[0:2]
+	usec	intptr[0:1000000]
+}
+
+itimerspec {
+	interval	timespec
+	value		timespec
+}
+
+itimerval {
+	interval	timeval
+	value		timeval
+}
+
+rlimit {
+	soft	intptr
+	hard	intptr
+}
+
+type rusage array[int8, 144]
+type siginfo array[int8, 128]
+
+seek_whence = SEEK_SET, SEEK_CUR, SEEK_END, SEEK_DATA, SEEK_HOLE
+dup_flags = O_CLOEXEC
+fcntl_dupfd = F_DUPFD, F_DUPFD_CLOEXEC
+fcntl_getflags = F_GETFD, F_GETFL, F_GET_SEALS
+fcntl_fd_flags = FD_CLOEXEC
+fcntl_status = O_APPEND, O_ASYNC, O_DIRECT, O_NOATIME, O_NONBLOCK
+fcntl_lock = F_GETLK, F_SETLK, F_SETLKW, F_OFD_GETLK, F_OFD_SETLK, F_OFD_SETLKW
+flock_type = F_RDLCK, F_WRLCK, F_UNLCK
+seal_types = F_SEAL_SEAL, F_SEAL_SHRINK, F_SEAL_GROW, F_SEAL_WRITE
+pollfd_events = POLLIN, POLLPRI, POLLOUT, POLLERR, POLLHUP, POLLNVAL, POLLRDNORM, POLLRDBAND, POLLWRNORM, POLLWRBAND, POLLRDHUP
+open_mode = S_IRUSR, S_IWUSR, S_IXUSR, S_IRGRP, S_IWGRP, S_IXGRP, S_IROTH, S_IWOTH, S_IXOTH, S_ISUID, S_ISGID, S_ISVTX
+wait_options = WNOHANG, WUNTRACED, WCONTINUED, __WALL, __WCLONE
+waitid_options = WNOHANG, WEXITED, WSTOPPED, WCONTINUED, WNOWAIT
+waitid_which = P_ALL, P_PID, P_PGID, P_PIDFD
+rlimit_type = RLIMIT_AS, RLIMIT_CORE, RLIMIT_CPU, RLIMIT_DATA, RLIMIT_FSIZE, RLIMIT_LOCKS, RLIMIT_MEMLOCK, RLIMIT_MSGQUEUE, RLIMIT_NICE, RLIMIT_NOFILE, RLIMIT_NPROC, RLIMIT_RSS, RLIMIT_RTPRIO, RLIMIT_RTTIME, RLIMIT_SIGPENDING, RLIMIT_STACK
+rusage_who = RUSAGE_SELF, RUSAGE_CHILDREN
+prio_which = PRIO_PROCESS, PRIO_PGRP
+sigaction_signals = SIGHUP, SIGINT, SIGQUIT, SIGILL, SIGTRAP, SIGABRT, SIGFPE, SIGKILL, SIGUSR1, SIGUSR2, SIGPIPE, SIGALRM, SIGTERM, SIGSTKFLT, SIGCHLD, SIGCONT, SIGSTOP, SIGTSTP, SIGTTIN, SIGTTOU, SIGURG, SIGXCPU, SIGXFSZ, SIGVTALRM, SIGPROF, SIGWINCH, SIGIO, SIGPWR, SIGSYS
+sigaction_flags = SA_NOCLDSTOP, SA_NOCLDWAIT, SA_SIGINFO, SA_ONSTACK, SA_RESTART, SA_NODEFER, SA_RESETHAND
+sigprocmask_how = SIG_BLOCK, SIG_UNBLOCK, SIG_SETMASK
+sigaltstack_flags = SS_ONSTACK, SS_DISABLE
+sigev_notify = SIGEV_NONE, SIGEV_SIGNAL, SIGEV_THREAD_ID
+itimer_which = ITIMER_REAL, ITIMER_VIRTUAL, ITIMER_PROF
+clock_id = CLOCK_REALTIME, CLOCK_MONOTONIC, CLOCK_PROCESS_CPUTIME_ID, CLOCK_THREAD_CPUTIME_ID, CLOCK_MONOTONIC_RAW, CLOCK_REALTIME_COARSE, CLOCK_MONOTONIC_COARSE, CLOCK_BOOTTIME, CLOCK_REALTIME_ALARM, CLOCK_BOOTTIME_ALARM
+timer_flags = TIMER_ABSTIME

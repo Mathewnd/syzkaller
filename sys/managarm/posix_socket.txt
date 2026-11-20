@@ -1,0 +1,112 @@
+include <sys/socket.h>
+include <sys/un.h>
+
+resource sock[fd]
+resource sock_unix[sock]
+
+socket$unix(domain const[AF_UNIX], type flags[unix_socket_type], proto const[0]) sock_unix
+socketpair$unix(domain const[AF_UNIX], type flags[unix_socket_type], proto const[0], fds ptr[out, unix_pair])
+bind$unix(fd sock_unix, addr ptr[in, sockaddr_un], addrlen len[addr])
+connect$unix(fd sock_unix, addr ptr[in, sockaddr_un], addrlen len[addr])
+listen(fd sock, backlog int32[-1:16])
+accept4(fd sock, peer ptr[out, sockaddr_storage, opt], peerlen ptr[inout, len[peer, int32]], flags flags[accept_flags]) sock
+accept4$unix(fd sock_unix, peer ptr[out, sockaddr_storage, opt], peerlen ptr[inout, len[peer, int32]], flags flags[accept_flags]) sock_unix
+shutdown(fd sock, how flags[shutdown_flags])
+getsockname(fd sock, addr ptr[out, sockaddr_storage], addrlen ptr[inout, len[addr, int32]])
+getpeername(fd sock, peer ptr[out, sockaddr_storage], peerlen ptr[inout, len[peer, int32]])
+
+sendmsg$unix(fd sock_unix, msg ptr[in, msghdr_un], f flags[send_flags])
+sendto$unix(fd sock_unix, buf buffer[in], len len[buf], f flags[send_flags], addr ptr[in, sockaddr_un, opt], addrlen len[addr])
+recvmsg(fd sock, msg ptr[inout, recv_msghdr], f flags[recv_flags])
+recvfrom(fd sock, buf buffer[out], len len[buf], f flags[recv_flags], addr ptr[out, sockaddr_storage, opt], addrlen ptr[inout, len[addr, int32]])
+
+setsockopt$sock_int(fd sock, level const[SOL_SOCKET], optname flags[sockopt_opt_sock_int], optval ptr[in, int32], optlen len[optval])
+getsockopt$sock_int(fd sock, level const[SOL_SOCKET], optname flags[sockopt_opt_sock_int], optval ptr[out, int32], optlen ptr[inout, len[optval, int32]])
+setsockopt$sock_timeval(fd sock, level const[SOL_SOCKET], optname flags[sockopt_opt_sock_timeval], optval ptr[in, timeval], optlen len[optval])
+getsockopt$sock_timeval(fd sock, level const[SOL_SOCKET], optname flags[sockopt_opt_sock_timeval], optval ptr[out, timeval], optlen ptr[inout, len[optval, int32]])
+setsockopt$sock_linger(fd sock, level const[SOL_SOCKET], optname const[SO_LINGER], optval ptr[in, linger], optlen len[optval])
+getsockopt$sock_cred(fd sock, level const[SOL_SOCKET], optname const[SO_PEERCRED], optval ptr[out, ucred], optlen ptr[inout, len[optval, int32]])
+
+unix_pair {
+	fd0	sock_unix
+	fd1	sock_unix
+}
+
+sockaddr_un [
+	file	sockaddr_un_file
+	abs	sockaddr_un_abstract
+] [varlen]
+
+sockaddr_un_file {
+	family	const[AF_UNIX, int16]
+	path	filename
+} [packed]
+
+sockaddr_un_abstract {
+	family	const[AF_UNIX, int16]
+	ind	const[0, int8]
+	id	proc[20000, 4, int32]
+} [packed]
+
+type sockaddr_storage array[int8, 128]
+
+msghdr_un {
+	addr	ptr[in, sockaddr_un, opt]
+	addrlen	len[addr, int32]
+	vec	ptr[in, array[iovec_in]]
+	vlen	len[vec, int32]
+	ctrl	ptr[in, array[cmsghdr_un], opt]
+	ctrllen	bytesize[ctrl, int32]
+	f	const[0, int32]
+}
+
+recv_msghdr {
+	addr	ptr[out, sockaddr_storage, opt]
+	addrlen	len[addr, int32]
+	vec	ptr[in, array[iovec_out]]
+	vlen	len[vec, int32]
+	ctrl	ptr[out, array[int8], opt]
+	ctrllen	bytesize[ctrl, int32]
+	f	const[0, int32]
+}
+
+cmsghdr_un [
+	rights	cmsghdr_un_rights
+	cred	cmsghdr_un_cred
+] [varlen]
+
+cmsghdr_un_rights {
+	len	len[parent, int32]
+	pad	const[0, int32]
+	level	const[SOL_SOCKET, int32]
+	type	const[SCM_RIGHTS, int32]
+	fds	array[fd]
+} [align[8]]
+
+cmsghdr_un_cred {
+	len	const[0x1c, int32]
+	pad	const[0, int32]
+	level	const[SOL_SOCKET, int32]
+	type	const[SCM_CREDENTIALS, int32]
+	cred	ucred
+} [align[8]]
+
+ucred {
+	pid	pid
+	uid	uid
+	gid	gid
+}
+
+# close() blocks for up to linger seconds
+linger {
+	onoff	int32[0:2]
+	linger	int32[0:2]
+}
+
+unix_socket_type = SOCK_STREAM, SOCK_DGRAM, SOCK_SEQPACKET, SOCK_CLOEXEC, SOCK_NONBLOCK
+accept_flags = SOCK_CLOEXEC, SOCK_NONBLOCK
+shutdown_flags = SHUT_RD, SHUT_WR, SHUT_RDWR
+send_flags = MSG_CONFIRM, MSG_DONTROUTE, MSG_DONTWAIT, MSG_EOR, MSG_MORE, MSG_NOSIGNAL, MSG_OOB
+recv_flags = MSG_CMSG_CLOEXEC, MSG_DONTWAIT, MSG_ERRQUEUE, MSG_OOB, MSG_PEEK, MSG_TRUNC, MSG_WAITALL
+sockopt_opt_sock_int = SO_DEBUG, SO_REUSEADDR, SO_REUSEPORT, SO_TYPE, SO_ERROR, SO_DONTROUTE, SO_BROADCAST, SO_SNDBUF, SO_RCVBUF, SO_SNDBUFFORCE, SO_RCVBUFFORCE, SO_KEEPALIVE, SO_OOBINLINE, SO_PASSCRED, SO_RCVLOWAT, SO_SNDLOWAT, SO_ACCEPTCONN, SO_PROTOCOL, SO_DOMAIN, SO_PEEK_OFF, SO_PRIORITY, SO_TIMESTAMP
+sockopt_opt_sock_timeval = SO_RCVTIMEO, SO_SNDTIMEO

@@ -1,0 +1,50 @@
+include <fcntl.h>
+include <termios.h>
+include <sys/ioctl.h>
+
+resource fd_tty[fd]
+
+openat$ptmx(fd const[AT_FDCWD], file ptr[in, string["/dev/ptmx"]], flags flags[open_flags], mode const[0]) fd_tty
+openat$tty(fd const[AT_FDCWD], file ptr[in, string["/dev/tty"]], flags flags[open_flags], mode const[0]) fd_tty
+syz_open_pts(fd fd_tty, flags flags[open_flags]) fd_tty
+
+ioctl$TIOCGPTN(fd fd_tty, cmd const[TIOCGPTN], arg ptr[out, int32])
+ioctl$TIOCSPTLCK(fd fd_tty, cmd const[TIOCSPTLCK], arg ptr[in, int32[0:2]])
+ioctl$TCGETS(fd fd_tty, cmd const[TCGETS], arg ptr[out, termios])
+ioctl$TCSETS(fd fd_tty, cmd const[TCSETS], arg ptr[in, termios])
+ioctl$TIOCGWINSZ(fd fd_tty, cmd const[TIOCGWINSZ], arg ptr[out, winsize])
+ioctl$TIOCSWINSZ(fd fd_tty, cmd const[TIOCSWINSZ], arg ptr[in, winsize])
+ioctl$TIOCSCTTY(fd fd_tty, cmd const[TIOCSCTTY], arg intptr[0:2])
+ioctl$TIOCNOTTY(fd fd_tty, cmd const[TIOCNOTTY])
+ioctl$TIOCGPGRP(fd fd_tty, cmd const[TIOCGPGRP], arg ptr[out, pid])
+ioctl$TIOCSPGRP(fd fd_tty, cmd const[TIOCSPGRP], arg ptr[in, pid])
+ioctl$TIOCGSID(fd fd_tty, cmd const[TIOCGSID], arg ptr[out, pid])
+tcgetattr(fd fd_tty, attr ptr[out, termios])
+tcsetattr(fd fd_tty, when flags[tcsetattr_when], attr ptr[in, termios])
+tcdrain(fd fd_tty)
+ttyname_r(fd fd_tty, buf buffer[out], size len[buf])
+ptsname_r(fd fd_tty, buf buffer[out], size len[buf])
+unlockpt(fd fd_tty)
+
+termios {
+	iflag	flags[termios_iflag, int32]
+	oflag	flags[termios_oflag, int32]
+	cflag	int32
+	lflag	flags[termios_lflag, int32]
+	line	int8
+	cc	array[int8, 32]
+	ispeed	int32
+	ospeed	int32
+}
+
+winsize {
+	row	int16
+	col	int16
+	xpixel	int16
+	ypixel	int16
+}
+
+tcsetattr_when = TCSANOW, TCSADRAIN, TCSAFLUSH
+termios_iflag = IGNBRK, BRKINT, IGNPAR, PARMRK, INPCK, ISTRIP, INLCR, IGNCR, ICRNL, IUCLC, IXON, IXANY, IXOFF, IMAXBEL, IUTF8
+termios_oflag = OPOST, OLCUC, ONLCR, OCRNL, ONOCR, ONLRET, OFILL, OFDEL
+termios_lflag = ISIG, ICANON, ECHO, ECHOE, ECHOK, ECHONL, NOFLSH, TOSTOP, IEXTEN, ECHOCTL, ECHOKE, ECHOPRT, FLUSHO, PENDIN
