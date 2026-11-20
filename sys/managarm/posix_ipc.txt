@@ -1,0 +1,68 @@
+include <fcntl.h>
+include <unistd.h>
+include <sys/epoll.h>
+include <sys/eventfd.h>
+include <sys/inotify.h>
+include <sys/pidfd.h>
+include <sys/signalfd.h>
+include <sys/timerfd.h>
+
+resource fd_epoll[fd]
+resource fd_event[fd]
+resource fd_signal[fd]
+resource fd_timer[fd]
+resource fd_inotify[fd]
+resource fd_pidfd[fd]
+resource inotifydesc[int32]
+
+pipe2(pipefd ptr[out, pipefd], flags flags[pipe_flags])
+
+eventfd(initval int32, flags flags[eventfd_flags]) fd_event
+read$eventfd(fd fd_event, val ptr[out, int64], len len[val])
+write$eventfd(fd fd_event, val ptr[in, int64], len len[val])
+
+epoll_create1(flags flags[epoll_flags]) fd_epoll
+epoll_ctl$EPOLL_CTL_ADD(epfd fd_epoll, op const[EPOLL_CTL_ADD], fd fd, ev ptr[in, epoll_event])
+epoll_ctl$EPOLL_CTL_MOD(epfd fd_epoll, op const[EPOLL_CTL_MOD], fd fd, ev ptr[in, epoll_event])
+epoll_ctl$EPOLL_CTL_DEL(epfd fd_epoll, op const[EPOLL_CTL_DEL], fd fd)
+# short waits as to not need to spend a lot of time waiting
+epoll_wait(epfd fd_epoll, events ptr[out, array[epoll_event]], maxevents len[events], timeout int32[0:20])
+epoll_pwait(epfd fd_epoll, events ptr[out, array[epoll_event]], maxevents len[events], timeout int32[0:20], sigmask ptr[in, sigset, opt])
+
+signalfd(fd fd, mask ptr[in, sigset], flags flags[signalfd_flags]) fd_signal
+read$signalfd(fd fd_signal, info ptr[out, array[int8, 128]], len len[info])
+
+timerfd_create(clockid flags[timerfd_clocks], flags flags[timerfd_create_flags]) fd_timer
+timerfd_settime(fd fd_timer, flags flags[timerfd_settime_flags], new ptr[in, itimerspec], old ptr[out, itimerspec, opt])
+timerfd_gettime(fd fd_timer, cur ptr[out, itimerspec])
+read$timerfd(fd fd_timer, val ptr[out, int64], len len[val])
+
+inotify_init1(flags flags[inotify_flags]) fd_inotify
+inotify_add_watch(fd fd_inotify, path ptr[in, filename], mask flags[inotify_mask]) inotifydesc
+inotify_rm_watch(fd fd_inotify, wd inotifydesc)
+
+pidfd_open(pid pid, flags flags[pidfd_open_flags]) fd_pidfd
+pidfd_send_signal(fd fd_pidfd, sig signalno, info ptr[in, siginfo, opt], flags const[0])
+pidfd_getpid(fd fd_pidfd) pid
+
+pipefd {
+	rfd	fd
+	wfd	fd
+}
+
+epoll_event {
+	events	flags[epoll_events, int32]
+	data	int64
+} [packed]
+
+pipe_flags = O_CLOEXEC, O_DIRECT, O_NONBLOCK
+eventfd_flags = EFD_CLOEXEC, EFD_NONBLOCK, EFD_SEMAPHORE
+epoll_flags = EPOLL_CLOEXEC
+epoll_events = EPOLLIN, EPOLLOUT, EPOLLRDHUP, EPOLLPRI, EPOLLERR, EPOLLHUP, EPOLLET, EPOLLONESHOT, EPOLLWAKEUP, EPOLLEXCLUSIVE
+signalfd_flags = SFD_CLOEXEC, SFD_NONBLOCK
+timerfd_clocks = CLOCK_REALTIME, CLOCK_MONOTONIC, CLOCK_BOOTTIME, CLOCK_REALTIME_ALARM, CLOCK_BOOTTIME_ALARM
+timerfd_create_flags = TFD_CLOEXEC, TFD_NONBLOCK
+timerfd_settime_flags = TFD_TIMER_ABSTIME, TFD_TIMER_CANCEL_ON_SET
+inotify_flags = IN_CLOEXEC, IN_NONBLOCK
+inotify_mask = IN_ACCESS, IN_ATTRIB, IN_CLOSE_WRITE, IN_CLOSE_NOWRITE, IN_CREATE, IN_DELETE, IN_DELETE_SELF, IN_MODIFY, IN_MOVE_SELF, IN_MOVED_FROM, IN_MOVED_TO, IN_OPEN, IN_DONT_FOLLOW, IN_EXCL_UNLINK, IN_MASK_ADD, IN_ONESHOT, IN_ONLYDIR
+pidfd_open_flags = PIDFD_NONBLOCK
