@@ -3,11 +3,13 @@
 
 package vminfo
 
+// ManagarmPosixModule is the coverage module of posix-subsystem.
+const ManagarmPosixModule = "posix-subsystem"
+
 type managarm struct {
 	nopChecker
 }
 
 func (managarm) parseModules(files filesystem) ([]*KernelModule, error) {
-	// thor is loaded at a fixed address and has no loadable modules.
-	return []*KernelModule{{}}, nil
+	return []*KernelModule{{}, {Name: ManagarmPosixModule}}, nil
 }

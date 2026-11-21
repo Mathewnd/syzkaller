@@ -12,6 +12,7 @@ import (
 	"strings"
 
 	"github.com/google/syzkaller/pkg/log"
+	"github.com/google/syzkaller/pkg/osutil"
 	"github.com/google/syzkaller/pkg/vminfo"
 	"github.com/google/syzkaller/sys/targets"
 )
@@ -38,10 +39,37 @@ func DiscoverModules(target *targets.Target, objDir string, moduleObj []string) 
 			return nil, err
 		}
 		modules = append(modules, modules1...)
+	} else if target.OS == targets.Managarm {
+		modules1, err := discoverModulesManagarm(objDir)
+		if err != nil {
+			return nil, err
+		}
+		modules = append(modules, modules1...)
 	} else if len(modules) != 1 {
 		return nil, fmt.Errorf("%v coverage does not support modules", target.OS)
 	}
 	return modules, nil
+}
+
+func discoverModulesManagarm(objDir string) ([]*vminfo.KernelModule, error) {
+	module := &vminfo.KernelModule{
+		Name: vminfo.ManagarmPosixModule,
+		Path: filepath.Join(objDir, vminfo.ManagarmPosixModule),
+	}
+
+	if !osutil.IsExist(module.Path) {
+		log.Logf(0, "%v not found, no coverage for it", module.Path)
+		return nil, nil
+	}
+
+	textRange, err := elfReadTextSecRange(module)
+	if err != nil {
+		return nil, err
+	}
+
+	module.Size = textRange.End - textRange.Start
+
+	return []*vminfo.KernelModule{module}, nil
 }
 
 func discoverModulesLinux(dirs []string) ([]*vminfo.KernelModule, error) {
