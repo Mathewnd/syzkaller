@@ -175,6 +175,10 @@ func elfReadModuleCoverPoints(target *targets.Target, module *vminfo.KernelModul
 		return pcs, err
 	}
 	defer file.Close()
+	if file.Type != elf.ET_REL {
+		// A linked executable has no call relocations, so look for calls in the code.
+		return elfReadExecutableCoverPoints(target, module, info, file)
+	}
 	callRelocType := arches[target.Arch].callRelocType
 	relaOffset := arches[target.Arch].relaOffset
 	for _, s := range file.Sections {
@@ -201,6 +205,32 @@ func elfReadModuleCoverPoints(target *targets.Target, module *vminfo.KernelModul
 			}
 		}
 	}
+	return pcs, nil
+}
+
+func elfReadExecutableCoverPoints(target *targets.Target, module *vminfo.KernelModule, info *symbolInfo,
+	file *elf.File) ([2][]uint64, error) {
+	text := file.Section(".text")
+	if text == nil {
+		return [2][]uint64{}, fmt.Errorf("no .text section in the object file")
+	}
+
+	data, err := text.Data()
+	if err != nil {
+		return [2][]uint64{}, err
+	}
+
+	pcs, err := readCoverPoints(target, info, data)
+	if err != nil {
+		return pcs, err
+	}
+
+	for typ := range pcs {
+		for i := range pcs[typ] {
+			pcs[typ][i] += module.Addr
+		}
+	}
+
 	return pcs, nil
 }
 
