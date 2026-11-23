@@ -74,8 +74,8 @@ static intptr_t execute_syscall(const call_t* c, intptr_t a[kMaxArgs])
 }
 
 #define KCOV_REQUEST_SET_SIZE _IOW('c', 1, int)
-#define KCOV_REQUEST_START _IOW('c', 100, int)
-#define KCOV_REQUEST_STOP _IO('c', 101)
+#define KCOV_REQUEST_START _IOW('c', 2, int)
+#define KCOV_REQUEST_STOP _IO('c', 3)
 
 #define KCOV_MODE_PC 1
 #define KCOV_MODE_CMP 2
