@@ -140,6 +140,14 @@ var archConfigs = map[string]*archConfig{
 		UseNewQemuImageOptions: true,
 		BlkDev:                 "virtio-blk-pci",
 	},
+	"managarm/arm64": {
+		Qemu: "qemu-system-aarch64",
+		QemuArgs:               "-enable-kvm -cpu host -machine virt,acpi=off,gic-version=host",
+		NetDev:                 "virtio-net-pci",
+		RngDev:                 "virtio-rng-pci",
+		UseNewQemuImageOptions: true,
+		BlkDev:                 "virtio-blk-pci",
+	},
 	"linux/amd64": {
 		Qemu:     "qemu-system-x86_64",
 		QemuArgs: "-enable-kvm -cpu host,migratable=off",

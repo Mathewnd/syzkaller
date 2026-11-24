@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/google/syzkaller/pkg/compiler"
 )
@@ -15,10 +16,36 @@ import (
 // Values are read from the object file, since the cross-compiled binary can't run on the host.
 type managarm struct{}
 
+// Each arch has its own sysroot, so -sourcedir is either a single sysroot
+// or a list of them (like "amd64=/build/system-root,arm64=/build-aarch64/system-root").
 func (*managarm) prepare(sourcedir string, build bool, arches []*Arch) error {
-	if _, err := os.Stat(filepath.Join(sourcedir, "usr", "include", "hel.h")); err != nil {
-		return fmt.Errorf("-sourcedir must point to a managarm sysroot (no usr/include/hel.h): %w", err)
+	sysroots := make(map[string]string)
+	if strings.Contains(sourcedir, "=") {
+		for _, entry := range strings.Split(sourcedir, ",") {
+			arch, dir, ok := strings.Cut(entry, "=")
+			if !ok {
+				return fmt.Errorf("invalid -sourcedir entry %q. expected arch=sysroot", entry)
+			}
+
+			sysroots[arch] = dir
+		}
 	}
+
+	for _, arch := range arches {
+		if len(sysroots) != 0 {
+			dir, ok := sysroots[arch.target.Arch]
+			if !ok {
+				return fmt.Errorf("no sysroot for %v in -sourcedir", arch.target.Arch)
+			}
+
+			arch.sourceDir = dir
+		}
+
+		if _, err := os.Stat(filepath.Join(arch.sourceDir, "usr", "include", "hel.h")); err != nil {
+			return fmt.Errorf("-sourcedir must point to a managarm sysroot (no usr/include/hel.h): %w", err)
+		}
+	}
+
 	return nil
 }
 

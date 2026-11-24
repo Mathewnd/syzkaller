@@ -38,12 +38,29 @@ func (ctx *managarm) findThorCrash(output []byte) *Report {
 }
 
 
-var managarmFaultIP = regexp.MustCompile(`^thor: .* in kernel, .*faulting ip: (?:0x)?([0-9a-fA-F]+)`)
+var managarmFaultIPs = []*regexp.Regexp{
+	regexp.MustCompile(`^thor: .* in kernel, .*faulting ip: (?:0x)?([0-9a-fA-F]+)`),
+	// aarch64
+	regexp.MustCompile(`^thor: Synchronous fault with interrupts disabled at IP (?:0x)?([0-9a-fA-F]+)`),
+	regexp.MustCompile(`^Unexpected fault \d+ from ip: (?:0x)?([0-9a-fA-F]+)`),
+	regexp.MustCompile(`^thor: IP = (?:0x)?([0-9a-fA-F]+),`),
+	// x86-64
+	regexp.MustCompile(`^Unexpected fault number \d+, from cs: 0x[0-9a-fA-F]+, ip: (?:0x)?([0-9a-fA-F]+)`),
+}
+
+func managarmFaultIP(line []byte) [][]byte {
+	for _, re := range managarmFaultIPs {
+		if match := re.FindSubmatch(line); match != nil {
+			return match
+		}
+	}
+	return nil
+}
 
 // Add location information to a title.
 func (ctx *managarm) symbolizeThorTitle(rep *Report,
 	symbFunc func(string, ...uint64) ([]symbolizer.Frame, error)) {
-	match := managarmFaultIP.FindSubmatch(managarmPlain(rep.Output[rep.StartPos:rep.EndPos]))
+	match := managarmFaultIP(managarmPlain(rep.Output[rep.StartPos:rep.EndPos]))
 	if match == nil {
 		return
 	}
@@ -88,7 +105,7 @@ func managarmThorIP(line []byte) (match [][]byte, isFrame bool) {
 	if match := managarmTraceIP.FindSubmatch(line); match != nil {
 		return match, true
 	}
-	return managarmFaultIP.FindSubmatch(line), false
+	return managarmFaultIP(line), false
 }
 
 var managarmThorOopses = []*oops{
@@ -183,6 +200,62 @@ var managarmThorOopses = []*oops{
 				fmt:          "thor: assertion failed: %[1]v",
 				noStackTrace: true,
 				corrupted:    true,
+			},
+		},
+		[]*regexp.Regexp{},
+	},
+	{
+		[]byte("thor: Synchronous fault with interrupts disabled"),
+		[]oopsFormat{
+			{
+				title:        compile(`thor: Synchronous fault with interrupts disabled`),
+				fmt:          "thor: synchronous fault with interrupts disabled",
+				noStackTrace: true,
+			},
+		},
+		[]*regexp.Regexp{},
+	},
+	{
+		[]byte("Unexpected fault "),
+		[]oopsFormat{
+			{
+				// aarch64
+				title:        compile(`Unexpected fault (\d+) from ip:`),
+				fmt:          "thor: unexpected fault %[1]v",
+				noStackTrace: true,
+			},
+			{
+				// x86-64
+				title:        compile(`Unexpected fault number (\d+)`),
+				fmt:          "thor: unexpected fault %[1]v",
+				noStackTrace: true,
+			},
+			{
+				title:        compile(`Unexpected fault code`),
+				fmt:          "thor: unexpected fault code",
+				noStackTrace: true,
+			},
+		},
+		[]*regexp.Regexp{},
+	},
+	{
+		[]byte("thor: Panic due to unrecoverable error"),
+		[]oopsFormat{
+			{
+				title:        compile(`thor: Panic due to unrecoverable error`),
+				fmt:          "thor: unrecoverable SError",
+				noStackTrace: true,
+			},
+		},
+		[]*regexp.Regexp{},
+	},
+	{
+		[]byte("thor: an invalid exception has occured"),
+		[]oopsFormat{
+			{
+				title:        compile(`thor: an invalid exception has occured`),
+				fmt:          "thor: invalid exception",
+				noStackTrace: true,
 			},
 		},
 		[]*regexp.Regexp{},

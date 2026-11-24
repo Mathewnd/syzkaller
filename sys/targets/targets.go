@@ -203,6 +203,13 @@ var List = map[string]map[string]*Target{
 			CxxCompiler: "x86_64-managarm-g++",
 			Objdump:     "x86_64-managarm-objdump",
 		},
+		ARM64: {
+			PtrSize:     8,
+			PageSize:    4 << 10,
+			CCompiler:   "aarch64-managarm-gcc",
+			CxxCompiler: "aarch64-managarm-g++",
+			Objdump:     "aarch64-managarm-objdump",
+		},
 	},
 	TestOS: {
 		TestArch64: {
